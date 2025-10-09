@@ -1,0 +1,406 @@
+import Foundation
+
+
+// Простая функция вывода
+func show(_ text: String) {
+    print(text)
+}
+
+func formatCurrency(_ value: Double) -> String {
+    return String(format: "%.2f ₸", value)
+}
+
+func formatDate(_ date: Date) -> String {
+    let df = DateFormatter()
+    df.dateStyle = .medium
+    df.timeStyle = .short
+    return df.string(from: date)
+}
+
+// MARK: - Product (struct)
+struct Product {
+    let id: String
+    let name: String
+    let price: Double
+    let category: Category
+    let description: String
+    
+    enum Category: String {
+        case electronics = "Electronics"
+        case clothing = "Clothing"
+        case food = "Food"
+        case books = "Books"
+    }
+    
+    // Отформатированная цена
+    var displayPrice: String {
+        formatCurrency(price)
+    }
+    
+    // Ошибки при инициализации
+    enum InitError: Error {
+        case invalidPrice
+        case emptyName
+    }
+    
+    // Инициализатор с валидацией
+    init(id: String, name: String, price: Double, category: Category, description: String) throws {
+        guard price >= 0 else { throw InitError.invalidPrice }
+        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw InitError.emptyName }
+        self.id = id
+        self.name = name
+        self.price = price
+        self.category = category
+        self.description = description
+    }
+}
+
+// MARK: - CartItem (struct)
+struct CartItem {
+    let product: Product
+    var quantity: Int
+    
+    // Подсумма для этой позиции
+    var subtotal: Double {
+        product.price * Double(quantity)
+    }
+    
+    // Обновить количество (валидация)
+    mutating func updateQuantity(_ newQuantity: Int) {
+        guard newQuantity > 0 else {
+            show("❗ Количество должно быть больше 0. Операция пропущена.")
+            return
+        }
+        quantity = newQuantity
+    }
+    
+    // Увеличить количество
+    mutating func increaseQuantity(by amount: Int) {
+        guard amount > 0 else { return }
+        quantity += amount
+    }
+}
+
+// MARK: - Address (struct)
+struct Address {
+    let street: String
+    let city: String
+    let zipCode: String
+    let country: String
+    
+    // Отформатированный адрес (многострочный)
+    var formattedAddress: String {
+        """
+        \(street)
+        \(city), \(zipCode)
+        \(country)
+        """
+    }
+}
+
+// MARK: - ShoppingCart (class)
+class ShoppingCart {
+    // items доступно только для чтения снаружи
+    private(set) var items: [CartItem] = []
+    var discountCode: String?
+    
+    init() {}
+    
+    // Добавить товар (если есть — увеличить количество)
+    func addProduct(_ product: Product, quantity: Int = 1) {
+        guard quantity > 0 else {
+            show("❗ Неверное количество для добавления.")
+            return
+        }
+        if let index = items.firstIndex(where: { $0.product.id == product.id }) {
+            items[index].increaseQuantity(by: quantity)
+        } else {
+            items.append(CartItem(product: product, quantity: quantity))
+        }
+    }
+    
+    // Удалить товар по id
+    func removeProduct(_ productId: String) {
+        if let index = items.firstIndex(where: { $0.product.id == productId }) {
+            items.remove(at: index)
+            show("🗑️ Товар удалён из корзины.")
+        } else {
+            show("❗ Товар с таким ID не найден в корзине.")
+        }
+    }
+    
+    // Обновить количество (если 0 — удалить)
+    func updateItemQuantity(productId: String, quantity: Int) {
+        guard quantity >= 0 else {
+            show("❗ Количество не может быть отрицательным.")
+            return
+        }
+        if let index = items.firstIndex(where: { $0.product.id == productId }) {
+            if quantity == 0 {
+                items.remove(at: index)
+                show("🗑️ Товар удалён из корзины (количество 0).")
+            } else {
+                items[index].updateQuantity(quantity)
+            }
+        } else {
+            show("❗ Товар с таким ID не найден в корзине.")
+        }
+    }
+    
+    // Очистить корзину
+    func clear() {
+        items.removeAll()
+    }
+    
+    // Подытог
+    var subtotal: Double {
+        items.reduce(0) { $0 + $1.subtotal }
+    }
+    
+    // Сумма скидки по коду
+    var discountAmount: Double {
+        guard let code = discountCode?.uppercased() else { return 0 }
+        switch code {
+        case "SAVE10":
+            return subtotal * 0.10
+        case "SAVE20":
+            return subtotal * 0.20
+        default:
+            return 0
+        }
+    }
+    
+    // Итого к оплате
+    var total: Double {
+        max(0, subtotal - discountAmount)
+    }
+    
+    // Количество товаров (шт)
+    var itemCount: Int {
+        items.reduce(0) { $0 + $1.quantity }
+    }
+    
+    // Пустая корзина?
+    var isEmpty: Bool {
+        items.isEmpty
+    }
+    
+    // Показать корзину в удобном виде
+    func showCart() {
+        if items.isEmpty {
+            show("Корзина пуста.")
+            return
+        }
+        show("📦 Корзина:")
+        for item in items {
+            show("\(item.product.name) x\(item.quantity) - \(formatCurrency(item.subtotal)) (\(item.product.displayPrice) each)")
+        }
+        show("Подытог: \(formatCurrency(subtotal))")
+        if discountAmount > 0 {
+            show("Скидка (\(discountCode!)): -\(formatCurrency(discountAmount))")
+            show("К оплате: \(formatCurrency(total))")
+        }
+        show("")
+    }
+}
+
+// MARK: - Order (struct) — неизменяемый снимок
+struct Order {
+    let orderId: String
+    let items: [CartItem]
+    let subtotal: Double
+    let discountAmount: Double
+    let total: Double
+    let timestamp: Date
+    let shippingAddress: Address
+    
+    init(from cart: ShoppingCart, shippingAddress: Address) {
+        self.orderId = UUID().uuidString
+        self.items = cart.items // копия значений
+        self.subtotal = cart.subtotal
+        self.discountAmount = cart.discountAmount
+        self.total = cart.total
+        self.timestamp = Date()
+        self.shippingAddress = shippingAddress
+    }
+    
+    var itemCount: Int {
+        items.reduce(0) { $0 + $1.quantity }
+    }
+    
+    func showOrder() {
+        show("🧾 Заказ \(orderId)")
+        show("Дата: \(formatDate(timestamp))")
+        for item in items {
+            show("\(item.product.name) x\(item.quantity) - \(formatCurrency(item.subtotal))")
+        }
+        show("Адрес доставки:\n\(shippingAddress.formattedAddress)")
+        show("Подытог: \(formatCurrency(subtotal))")
+        if discountAmount > 0 {
+            show("Скидка: -\(formatCurrency(discountAmount))")
+        }
+        show("Итого к оплате: \(formatCurrency(total))\n")
+    }
+}
+
+// MARK: - Каталог (создаём с валидацией)
+let catalog: [Product] = [
+    try! Product(id: "1", name: "Ноутбук", price: 350_000, category: .electronics, description: "Игровой ноутбук"),
+    try! Product(id: "2", name: "Футболка", price: 5_000, category: .clothing, description: "Хлопковая футболка"),
+    try! Product(id: "3", name: "Пицца", price: 2_500, category: .food, description: "Сырная пицца"),
+    try! Product(id: "4", name: "Наушники", price: 15_000, category: .electronics, description: "Беспроводные наушники"),
+    try! Product(id: "5", name: "Книга", price: 3_200, category: .books, description: "Учебное пособие")
+]
+
+// Вспомогательная корзина для текущей сессии
+let cart = ShoppingCart()
+
+// Показать каталог
+func showCatalog() {
+    show("📚 Каталог продуктов:")
+    for product in catalog {
+        show("\(product.id). \(product.name) - \(product.displayPrice) (\(product.category.rawValue))")
+    }
+    show("")
+}
+
+// Демонстрация difference value/reference (опционально)
+func runDemoScenarios() {
+    show("=== Демонстрация: добавление товаров и поведение value/reference ===")
+    let demoCart = ShoppingCart()
+    let laptop = catalog.first { $0.id == "1" }!
+    let book = catalog.first { $0.id == "5" }!
+    demoCart.addProduct(laptop, quantity: 1)
+    demoCart.addProduct(book, quantity: 2)
+    // Добавляем ноутбук ещё — количество должно обновиться
+    demoCart.addProduct(laptop, quantity: 1)
+    show("После добавления ноутбука два раза:")
+    demoCart.showCart() // ноутбук 2 шт
+    
+    // Поведение reference: передаём корзину в функцию и меняем — оригинал изменится
+    func modifyCart(_ cart: ShoppingCart) {
+        let headphones = catalog.first { $0.id == "4" }!
+        cart.addProduct(headphones, quantity: 1)
+    }
+    modifyCart(demoCart)
+    show("После вызова modifyCart(demoCart) — в корзине появились наушники (reference):")
+    demoCart.showCart()
+    
+    // Поведение value: CartItem — struct
+    let item1 = CartItem(product: laptop, quantity: 1)
+    var item2 = item1
+    item2.updateQuantity(5)
+    show("CartItem (value type) — после копирования и изменения item2.quantity:")
+    show("item1.quantity = \(item1.quantity) (ожидаем 1)")
+    show("item2.quantity = \(item2.quantity) (ожидаем 5)")
+    
+    // Создаём заказ (snapshot)
+    let address = Address(street: "Demo Street 1", city: "Almaty", zipCode: "050000", country: "Kazakhstan")
+    let order = Order(from: demoCart, shippingAddress: address)
+    show("Создан Order — теперь очистим demoCart и проверим, что order остаётся неизменным")
+    demoCart.clear()
+    show("Order items count: \(order.itemCount)") // должен быть > 0
+    show("Demo cart item count: \(demoCart.itemCount)") // 0
+    show("=== Конец демонстрации ===\n")
+}
+
+// MARK: - Основной цикл (интерактив)
+var isRunning = true
+
+while isRunning {
+    show("""
+    Меню:
+    1. Показать каталог
+    2. Добавить товар в корзину
+    3. Удалить товар из корзины
+    4. Показать корзину
+    5. Оформить заказ
+    6. Применить код скидки
+    7. Демонстрационные сценарии (demo)
+    8. Выйти
+    Выберите действие:
+    """)
+    
+    guard let choice = readLine(), let option = Int(choice) else {
+        show("❗ Неверный ввод.")
+        continue
+    }
+    
+    switch option {
+    case 1:
+        showCatalog()
+        
+    case 2:
+        showCatalog()
+        show("Введите ID товара:")
+        if let productId = readLine(),
+           let product = catalog.first(where: { $0.id == productId }) {
+            
+            show("Введите количество:")
+            if let qtyInput = readLine(), let qty = Int(qtyInput), qty > 0 {
+                cart.addProduct(product, quantity: qty)
+                show("✅ Товар добавлен в корзину.\n")
+            } else {
+                show("❗ Неверное количество.\n")
+            }
+        } else {
+            show("❗ Товар с таким ID не найден.\n")
+        }
+        
+    case 3:
+        cart.showCart()
+        show("Введите ID товара для удаления:")
+        if let productId = readLine(), !productId.isEmpty {
+            cart.removeProduct(productId)
+            show("")
+        }
+        
+    case 4:
+        cart.showCart()
+        
+    case 5:
+        cart.showCart()
+        if cart.total == 0 {
+            show("❗ Корзина пуста или сумма равна нулю. Добавьте товары перед оформлением.")
+        } else {
+            // Спросим адрес по полям
+            show("Введите улицу (street):")
+            let street = readLine() ?? ""
+            show("Введите город (city):")
+            let city = readLine() ?? ""
+            show("Введите почтовый индекс (zip):")
+            let zip = readLine() ?? ""
+            show("Введите страну (country):")
+            let country = readLine() ?? ""
+            
+            if street.trimmingCharacters(in: .whitespaces).isEmpty ||
+                city.trimmingCharacters(in: .whitespaces).isEmpty ||
+                country.trimmingCharacters(in: .whitespaces).isEmpty {
+                show("❗ Поля адреса не должны быть пустыми.\n")
+            } else {
+                let address = Address(street: street, city: city, zipCode: zip, country: country)
+                let order = Order(from: cart, shippingAddress: address)
+                order.showOrder()
+                cart.clear()
+                show("✅ Заказ оформлен! Спасибо за покупку.\n")
+            }
+        }
+        
+    case 6:
+        show("Введите код скидки (SAVE10 или SAVE20):")
+        if let code = readLine(), !code.isEmpty {
+            cart.discountCode = code
+            show("Код применён. Новая сумма к оплате: \(formatCurrency(cart.total))\n")
+        }
+        
+    case 7:
+        runDemoScenarios()
+        
+    case 8:
+        isRunning = false
+        show("👋 Выход из программы.")
+        
+    default:
+        show("❗ Неверный выбор.\n")
+    }
+}
