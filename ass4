@@ -1,0 +1,197 @@
+//
+//  SceneDelegate.swift
+//  DiceeApp
+//
+//  Created by Dariya on 20.10.2025.
+//
+
+import UIKit
+
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+
+    var window: UIWindow?
+
+
+    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
+        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
+        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
+        guard let _ = (scene as? UIWindowScene) else { return }
+    }
+
+    func sceneDidDisconnect(_ scene: UIScene) {
+        // Called as the scene is being released by the system.
+        // This occurs shortly after the scene enters the background, or when its session is discarded.
+        // Release any resources associated with this scene that can be re-created the next time the scene connects.
+        // The scene may re-connect later, as its session was not necessarily discarded (see `application:didDiscardSceneSessions` instead).
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        // Called when the scene has moved from an inactive state to an active state.
+        // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
+    }
+
+    func sceneWillResignActive(_ scene: UIScene) {
+        // Called when the scene will move from an active state to an inactive state.
+        // This may occur due to temporary interruptions (ex. an incoming phone call).
+    }
+
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        // Called as the scene transitions from the background to the foreground.
+        // Use this method to undo the changes made on entering the background.
+    }
+
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        // Called as the scene transitions from the foreground to the background.
+        // Use this method to save data, release shared resources, and store enough scene-specific state information
+        // to restore the scene back to its current state.
+    }
+
+
+}
+
+//
+//  SceneDelegate.swift
+//  DiceeApp
+//
+//  Created by Dariya on 20.10.2025.
+//
+
+import UIKit
+
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+
+    var window: UIWindow?
+
+
+    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
+        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
+        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
+        guard let _ = (scene as? UIWindowScene) else { return }
+    }
+
+    func sceneDidDisconnect(_ scene: UIScene) {
+        // Called as the scene is being released by the system.
+        // This occurs shortly after the scene enters the background, or when its session is discarded.
+        // Release any resources associated with this scene that can be re-created the next time the scene connects.
+        // The scene may re-connect later, as its session was not necessarily discarded (see `application:didDiscardSceneSessions` instead).
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        // Called when the scene has moved from an inactive state to an active state.
+        // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
+    }
+
+    func sceneWillResignActive(_ scene: UIScene) {
+        // Called when the scene will move from an active state to an inactive state.
+        // This may occur due to temporary interruptions (ex. an incoming phone call).
+    }
+
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        // Called as the scene transitions from the background to the foreground.
+        // Use this method to undo the changes made on entering the background.
+    }
+
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        // Called as the scene transitions from the foreground to the background.
+        // Use this method to save data, release shared resources, and store enough scene-specific state information
+        // to restore the scene back to its current state.
+    }
+
+
+}
+
+//
+//  DiceeAppTests.swift
+//  DiceeAppTests
+//
+//  Created by Dariya on 20.10.2025.
+//
+
+import Testing
+@testable import DiceeApp
+
+struct DiceeAppTests {
+
+    @Test func example() async throws {
+        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    }
+
+}
+//
+//  DiceeAppUITests.swift
+//  DiceeAppUITests
+//
+//  Created by Dariya on 20.10.2025.
+//
+
+import XCTest
+
+final class DiceeAppUITests: XCTestCase {
+
+    override func setUpWithError() throws {
+        // Put setup code here. This method is called before the invocation of each test method in the class.
+
+        // In UI tests it is usually best to stop immediately when a failure occurs.
+        continueAfterFailure = false
+
+        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
+    }
+
+    override func tearDownWithError() throws {
+        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    }
+
+    @MainActor
+    func testExample() throws {
+        // UI tests must launch the application that they test.
+        let app = XCUIApplication()
+        app.launch()
+
+        // Use XCTAssert and related functions to verify your tests produce the correct results.
+    }
+
+    @MainActor
+    func testLaunchPerformance() throws {
+        // This measures how long it takes to launch your application.
+        measure(metrics: [XCTApplicationLaunchMetric()]) {
+            XCUIApplication().launch()
+        }
+    }
+}
+
+//
+//  DiceeAppUITestsLaunchTests.swift
+//  DiceeAppUITests
+//
+//  Created by Dariya on 20.10.2025.
+//
+
+import XCTest
+
+final class DiceeAppUITestsLaunchTests: XCTestCase {
+
+    override class var runsForEachTargetApplicationUIConfiguration: Bool {
+        true
+    }
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+    }
+
+    @MainActor
+    func testLaunch() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        // Insert steps here to perform after app launch but before taking a screenshot,
+        // such as logging into a test account or navigating somewhere in the app
+
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Launch Screen"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+}
+
